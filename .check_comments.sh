@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 for cmd in "todo" "fanz"; do
-    grep -n "\\\\$cmd" paper.tex
+    grep -n "\\\\$cmd" *.tex
 done
 
-grep "\\\\begin{comment}" paper.tex
+grep -n "\\\\begin{comment}" *.tex
