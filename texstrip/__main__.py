@@ -1,11 +1,8 @@
 """
-Sanitize LaTeX sources for submission. This script removes comments
-(both inline ones (i.e., things between % and the next \n) and comment
-environments (i.e., things within \begin{comment} and |end{comment}),
-copies the supplementary files to a new folder for a clean submission.
+texstrip sanitizes LaTeX sources for submission.
 
 Usage:
-  texstrip.py [options] <main> [<extra> ...]
+  texstrip [options] <main> [<extra> ...]
 
 Options:
   -h --help                 Show this screen.
@@ -23,7 +20,6 @@ import subprocess
 
 import chromalog
 from docopt import docopt
-
 from strip_comments import strip_comments_from_files
 
 
@@ -32,7 +28,7 @@ def check_exe_available(exe):
         raise Exception("{} not available".format(exe))
 
 
-if __name__ == '__main__':
+def main():
     # check dependencies are available
     check_exe_available('latexpand')
 
@@ -92,3 +88,7 @@ if __name__ == '__main__':
     from chromalog.mark.helpers.simple import success, important
 
     logger.info("%s The stripped version is at %s" % (success("Done!"), important(target_main_file)))
+
+
+if __name__ == '__main__':
+    main()
