@@ -25,7 +25,7 @@ import tempfile
 import subprocess
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     args = docopt(__doc__, version='texstrip v0.0.1')
 
     main_file = args['<main>']

@@ -24,13 +24,16 @@ def strip_comments(source):
     # Deal with escaped backslashes, so we don't think they're escaping %.
     def t_BACKSLASH(t):
         r"\\\\"
-        logging.debug('handling backslash at {}'.format(t.lexer.lineno))
+        logging.debug('in backslash {}'.format(t))
         return t
 
     # One-line comments
     def t_PERCENT(t):
         r"\%"
         t.lexer.begin("linecomment")
+        logging.debug('in linecomment {}. removing.'.format(t))
+        # keep the % sign for clarity
+        return t
 
     # Escaped percent signs
     def t_ESCPCT(t):
@@ -52,11 +55,13 @@ def strip_comments(source):
     # Any other character in initial state we leave alone
     def t_CHAR(t):
         r"."
+        logging.debug('in CHAR {}. keeping.'.format(t))
         return t
 
     def t_NEWLINE(t):
         r"\n+"
         t.lexer.lineno += len(t.value)
+        logging.debug('in NEWLINE {}. keeping.'.format(t))
         return t
 
     # End comment environment
@@ -95,16 +100,19 @@ def strip_comments(source):
         r"\n"
         t.lexer.lineno += len(t.value)
         t.lexer.begin("INITIAL")
-        # Newline at the end of a line comment is stripped.
+        logging.debug('in linecomment::NEWLINE {}. keeping.'.format(t))
+        # keep the newline at the end of a line comment to handle tests/linecomment.txt correctly
+        return t
 
     # Ignore anything after a % on a line
     def t_linecomment_CHAR(t):
         r"."
-        pass
+        logging.debug('in linecomment CHAR {}'.format(t))
 
     lexer = ply.lex.lex()
     lexer.input(source)
 
+    # logging.debug('===printing===')
     # while True:
     #     tok = lexer.token()
     #     if not tok:
@@ -122,20 +130,24 @@ def strip_comments_from_files(infile, outfile):
         f.write(strip_comments(source))
 
 
-def main():
+if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('filename', help='the file to strip comments from')
     parser.add_argument('--encoding', '-e', default='utf-8')
-    parser.add_argument('--output', '-o', default='stripped.tex')
+    parser.add_argument('--output', '-o', default=None)
+    parser.add_argument('--verbose', '-v', action='store_true')
 
     args = parser.parse_args()
+
+    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
     with io.open(args.filename, encoding=args.encoding) as f:
         source = f.read()
 
-    with io.open(args.output, mode='w', encoding=args.encoding) as f:
-        f.write(strip_comments(source))
-
-
-if __name__ == '__main__':
-    main()
+    stripped = strip_comments(source)
+    if args.output:
+        with io.open(args.output, mode='w', encoding=args.encoding) as f:
+            f.write(stripped)
+    else:
+        import sys
+        sys.stdout.write(stripped)
