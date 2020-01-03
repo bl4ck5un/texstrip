@@ -1,6 +1,7 @@
 """
 Sanitize LaTeX sources for submission. This script removes comments
-(both inline ones (i.e., things after %) and comment environments),
+(both inline ones (i.e., things between % and the next \n) and comment
+environments (i.e., things within \begin{comment} and |end{comment}),
 copies the supplementary files to a new folder for a clean submission.
 
 Usage:
@@ -9,60 +10,85 @@ Usage:
 Options:
   -h --help                 Show this screen.
   --version                 Show version.
-  --comments
   --outdir=<outdir>         The output directory (relative to the main file) [default: stripped].
-  -b,--build                   How to build.
-  -c,--check                   Check the comments.
+  --keep                    Keep intermediate files for debugging.
+  -b,--build                Build after stripping.
+  -v,--verbose              Print debug messages.
 """
 
-from docopt import docopt
-import shutil
-from distutils import dir_util
-from strip_comments import strip_comments_from_files
 import logging
 import os
-import tempfile
+import shutil
 import subprocess
 
+import chromalog
+from docopt import docopt
+
+from strip_comments import strip_comments_from_files
+
+
+def check_exe_available(exe):
+    if shutil.which(exe) is None:
+        raise Exception("{} not available".format(exe))
+
+
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    args = docopt(__doc__, version='texstrip v0.0.1')
+    # check dependencies are available
+    check_exe_available('latexpand')
 
+    # setup docopt and logging
+    args = docopt(__doc__, version='texstrip v0.0.2')
+
+    logger_format = '%(asctime)s [%(levelname)s] - %(message)s'
+    chromalog.basicConfig(level=logging.DEBUG if args['--verbose'] else logging.INFO, format=logger_format)
+    logger = logging.getLogger('texstrip')
+
+    # disable parser logger
+    logging.getLogger('strip_comments').setLevel(logging.INFO)
+
+    # the main TeX input file
     main_file = args['<main>']
-    logging.debug('using {} as the main file'.format(main_file))
+    logger.info('using {} as the main file'.format(main_file))
 
-    # extract target dir
+    # create the target dir
     output_dir = os.path.join(os.getcwd(), args['--outdir'])
     os.makedirs(output_dir, exist_ok=True)
 
-    logging.debug("using {} as the output dir".format(output_dir))
+    logger.info("using {} as the output dir".format(output_dir))
 
-    # expand
+    # 1) expand the main file
     target_main_file = os.path.join(output_dir, os.path.basename(main_file))
+    # names for intermediate files
+    expanded_main_file = os.path.join(output_dir, 'expanded.tex.strip')
+    stripped_main_file = os.path.join(output_dir, 'stripped.tex.strip')
+
     if target_main_file == main_file:
         raise Exception('target main file is the same as the source')
 
-    cmd = 'latexpand --empty-comments -o {} {}'.format(os.path.join(output_dir, 'expanded.tex'), main_file)
+    cmd = 'latexpand --empty-comments -o {} {}'.format(expanded_main_file, main_file)
     subprocess.run(cmd, shell=True, check=True)
-    logging.info('Finished: {}'.format(cmd))
+    logger.debug('Finished: {}'.format(cmd))
 
     if args['<extra>']:
         cp_cmd = "cp -rf {} {}".format(" ".join(args['<extra>']), output_dir)
         subprocess.run(cp_cmd, shell=True, check=True)
-        logging.info("Finished: {}".format(cp_cmd))
+        logger.debug("Finished: {}".format(cp_cmd))
 
-    # 2nd step: strip comments
-    strip_comments_from_files(os.path.join(output_dir, 'expanded.tex'),
-                              os.path.join(output_dir, 'stripped.tex'))
+    # 2) remove comments
+    strip_comments_from_files(expanded_main_file, stripped_main_file)
 
-    # 3rd step: copy
-    shutil.copyfile(os.path.join(output_dir, 'stripped.tex'), target_main_file)
+    # 3) clean up
+    shutil.copyfile(stripped_main_file, target_main_file)
+    # remove intermediate files unless --keep
+    if not args['--keep']:
+        os.remove(expanded_main_file)
+        os.remove(stripped_main_file)
 
     if args['--build']:
         os.chdir(output_dir)
         build_cmd = "latexmk -pdf {}".format(target_main_file)
         subprocess.run(build_cmd, shell=True, check=True)
 
+    from chromalog.mark.helpers.simple import success, important
 
-
-
+    logger.info("%s The stripped version is at %s" % (success("Done!"), important(target_main_file)))
