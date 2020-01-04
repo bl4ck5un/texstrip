@@ -19,20 +19,28 @@ import shutil
 import subprocess
 
 import chromalog
+from chromalog.mark.helpers.simple import success, important  # pylint: disable=import-error
 from docopt import docopt
 
 try:
     from texstrip import strip_comments
-except:
+except ImportError:
     import strip_comments
 
 
 def check_exe_available(exe):
+    """
+    raise if exe is not available in PATH
+    """
     if shutil.which(exe) is None:
         raise Exception("{} not available".format(exe))
 
 
 def main():
+    """
+    main function
+    """
+
     # check dependencies are available
     check_exe_available('latexpand')
 
@@ -40,7 +48,8 @@ def main():
     args = docopt(__doc__, version='0.0.3')
 
     logger_format = '%(asctime)s [%(levelname)s] - %(message)s'
-    chromalog.basicConfig(level=logging.DEBUG if args['--verbose'] else logging.INFO, format=logger_format)
+    chromalog.basicConfig(level=logging.DEBUG if args['--verbose'] else logging.INFO,
+                          format=logger_format)
     logger = logging.getLogger('texstrip')
 
     # disable parser logger
@@ -48,13 +57,13 @@ def main():
 
     # the main TeX input file
     main_file = args['<main>']
-    logger.info('using {} as the main file'.format(main_file))
+    logger.info('using %s as the main file', important(main_file))
 
     # create the target dir
     output_dir = os.path.join(os.getcwd(), args['--outdir'])
     os.makedirs(output_dir, exist_ok=True)
 
-    logger.info("using {} as the output dir".format(output_dir))
+    logger.info("using %s as the output dir", important(output_dir))
 
     # 1) expand the main file
     target_main_file = os.path.join(output_dir, os.path.basename(main_file))
@@ -67,12 +76,12 @@ def main():
 
     cmd = 'latexpand --empty-comments -o {} {}'.format(expanded_main_file, main_file)
     subprocess.run(cmd, shell=True, check=True)
-    logger.debug('Finished: {}'.format(cmd))
+    logger.debug('Finished: %s', cmd)
 
     if args['<extra>']:
         cp_cmd = "cp -rf {} {}".format(" ".join(args['<extra>']), output_dir)
         subprocess.run(cp_cmd, shell=True, check=True)
-        logger.debug("Finished: {}".format(cp_cmd))
+        logger.debug("Finished: %s", cp_cmd)
 
     # 2) remove comments
     strip_comments.strip_comments_from_files(expanded_main_file, stripped_main_file)
@@ -89,9 +98,9 @@ def main():
         build_cmd = "latexmk -pdf {}".format(target_main_file)
         subprocess.run(build_cmd, shell=True, check=True)
 
-    from chromalog.mark.helpers.simple import success, important
 
-    logger.info("%s The stripped version is at %s" % (success("Done!"), important(target_main_file)))
+
+    logger.info("%s The stripped version is at %s", success("Done!"), important(target_main_file))
 
 
 if __name__ == '__main__':

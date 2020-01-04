@@ -1,7 +1,17 @@
 texstrip
 ========
+.. image:: https://badge.fury.io/py/texstrip.svg
+    :alt: pypi
+    :target: https://badge.fury.io/py/thumbup
+.. image:: https://img.shields.io/github/license/mashape/apistatus.svg
+    :alt: license
+    :target: https://opensource.org/licenses/MIT
+.. image:: https://travis-ci.org/bl4ck5un/texstrip.svg?branch=master
+    :alt: travis-ci
+    :target: https://travis-ci.org/bl4ck5un/texstrip
 
-``texstrip`` is a small tool that strips (removes) comments from TeX sources. I made this tool to relieve myself from manually deleting comments when submitting TeX sources to [arXiv](https://arxiv.org/help/faq/whytex).
+
+``texstrip`` is a small tool that strips (removes) comments from TeX sources. I made this tool to relieve myself from manually removing comments when submitting TeX sources to places like arXiv_.
 
 It removes both inline comments (i.e., things between ``%`` and the next ``\n``) and comment environments (i.e., things within ``\begin{comment}`` and ``\end{comment}``),
 copies the supplementary files to a new folder for a clean submission.
@@ -31,3 +41,5 @@ Usage
   texstrip --help
 
 - TODO: add an example
+
+.. _arXiv: https://arxiv.org/help/faq/whytex
