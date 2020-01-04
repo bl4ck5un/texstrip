@@ -98,8 +98,6 @@ def main():
         build_cmd = "latexmk -pdf {}".format(target_main_file)
         subprocess.run(build_cmd, shell=True, check=True)
 
-
-
     logger.info("%s The stripped version is at %s", success("Done!"), important(target_main_file))
 
 
