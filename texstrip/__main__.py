@@ -37,7 +37,7 @@ def main():
     check_exe_available('latexpand')
 
     # setup docopt and logging
-    args = docopt(__doc__, version='0.0.2')
+    args = docopt(__doc__, version='0.0.3')
 
     logger_format = '%(asctime)s [%(levelname)s] - %(message)s'
     chromalog.basicConfig(level=logging.DEBUG if args['--verbose'] else logging.INFO, format=logger_format)
