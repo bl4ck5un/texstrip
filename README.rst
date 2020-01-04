@@ -3,9 +3,6 @@ texstrip
 .. image:: https://badge.fury.io/py/texstrip.svg
     :alt: pypi
     :target: https://badge.fury.io/py/thumbup
-.. image:: https://img.shields.io/github/license/mashape/apistatus.svg
-    :alt: license
-    :target: https://opensource.org/licenses/MIT
 .. image:: https://travis-ci.org/bl4ck5un/texstrip.svg?branch=master
     :alt: travis-ci
     :target: https://travis-ci.org/bl4ck5un/texstrip
