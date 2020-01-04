@@ -20,7 +20,11 @@ import subprocess
 
 import chromalog
 from docopt import docopt
-from strip_comments import strip_comments_from_files
+
+try:
+    from texstrip import strip_comments
+except:
+    import strip_comments
 
 
 def check_exe_available(exe):
@@ -71,7 +75,7 @@ def main():
         logger.debug("Finished: {}".format(cp_cmd))
 
     # 2) remove comments
-    strip_comments_from_files(expanded_main_file, stripped_main_file)
+    strip_comments.strip_comments_from_files(expanded_main_file, stripped_main_file)
 
     # 3) clean up
     shutil.copyfile(stripped_main_file, target_main_file)
