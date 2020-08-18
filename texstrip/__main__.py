@@ -17,6 +17,8 @@ import logging
 import os
 import shutil
 import subprocess
+import pathlib
+import sys
 
 import chromalog
 from docopt import docopt
@@ -70,9 +72,21 @@ def main():
     logger.debug('Finished: {}'.format(cmd))
 
     if args['<extra>']:
-        cp_cmd = "cp -rf {} {}".format(" ".join(args['<extra>']), output_dir)
-        subprocess.run(cp_cmd, shell=True, check=True)
-        logger.debug("Finished: {}".format(cp_cmd))
+        for extra in args['<extra>']:
+            # detect files outside working tree
+            path = pathlib.Path(extra)
+            logging.info(path)
+            logging.info(path.parent)
+            if str(path.relative_to('.')).startswith('..'):
+                logging.fatal("can't copy files outside current dir %s", extra)
+                sys.exit(1)
+            if path.parent == '.':
+                shutil.copy(path, output_dir)
+            else:
+                new_dir = pathlib.Path(output_dir) / path.parent
+                new_dir.mkdir(parents=True, exist_ok=True)
+
+                shutil.copy(path, new_dir)
 
     # 2) remove comments
     strip_comments.strip_comments_from_files(expanded_main_file, stripped_main_file)
@@ -87,6 +101,8 @@ def main():
     if args['--build']:
         os.chdir(output_dir)
         build_cmd = "latexmk -pdf {}".format(target_main_file)
+        subprocess.run(build_cmd, shell=True, check=True)
+        build_cmd = "latexmk -C {}".format(target_main_file)
         subprocess.run(build_cmd, shell=True, check=True)
 
     from chromalog.mark.helpers.simple import success, important
