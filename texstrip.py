@@ -15,14 +15,15 @@ Options:
   -c,--check                   Check the comments.
 """
 
-from docopt import docopt
-import shutil
-from distutils import dir_util
-from strip_comments import strip_comments_from_files
 import logging
 import os
-import tempfile
+import shutil
 import subprocess
+import sys
+
+from docopt import docopt
+
+from strip_comments import strip_comments_from_files
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
@@ -47,6 +48,23 @@ if __name__ == '__main__':
     logging.info('Finished: {}'.format(cmd))
 
     if args['<extra>']:
+        import shutil
+        import pathlib
+
+        for extra in args['<extra>']:
+            # TODO: detect files outside working tree in a better way
+            path = pathlib.Path(extra)
+            if str(path.relative_to('.')).startswith('..'):
+                logging.fatal("can't copy files outside current dir %s", extra)
+                sys.exit(1)
+            if path.parent != '.':
+                shutil.copy(path, output_dir)
+            else:
+                new_dir = pathlib.Path(output_dir) / path.parent
+                new_dir.mkdir(parents=True, exist_ok=True)
+
+                shutil.copy(path, new_dir)
+
         cp_cmd = "cp -rf {} {}".format(" ".join(args['<extra>']), output_dir)
         subprocess.run(cp_cmd, shell=True, check=True)
         logging.info("Finished: {}".format(cp_cmd))
@@ -62,7 +80,3 @@ if __name__ == '__main__':
         os.chdir(output_dir)
         build_cmd = "latexmk -pdf {}".format(target_main_file)
         subprocess.run(build_cmd, shell=True, check=True)
-
-
-
-
