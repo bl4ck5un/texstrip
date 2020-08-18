@@ -75,8 +75,7 @@ def main():
         for extra in args['<extra>']:
             # detect files outside working tree
             path = pathlib.Path(extra)
-            logging.info(path)
-            logging.info(path.parent)
+            logging.info("copying %s", path)
             if str(path.relative_to('.')).startswith('..'):
                 logging.fatal("can't copy files outside current dir %s", extra)
                 sys.exit(1)
